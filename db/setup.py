@@ -26,7 +26,7 @@ class User(Base):
         self.password = self.encrypt_password(password)
 
     def encrypt_password(self, password):
-        self.password = hashlib.sha224(password).hexdigest()
+        return hashlib.sha224(password).hexdigest()
 
     def verify_password(self, password):
         return self.password == hashlib.sha224(password).hexdigest()[0:63]
