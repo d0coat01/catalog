@@ -1,0 +1,158 @@
+body {
+	font-family: 'Skranji', cursive;
+	font-size: 16px;
+	color: #2d3c49;
+	margin: 0;
+}
+h1 {
+    margin: 10px 0;
+    text-align:center;
+}
+a {
+  color: #2196F3;
+  text-decoration: none;
+  text-align:center;
+}
+
+button {
+    font-family: 'Skranji', cursive;
+	font-size: 16px;
+	line-height: 30px;
+    height: 30px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+button:hover {
+    background-color: #efefef;
+}
+
+a:hover {
+    color: #0a6ebd;
+}
+
+.container {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction:column;
+	align-items:center;
+	max-width: 1000px;
+	margin: 0 auto;
+}
+
+.flash-messages {
+    padding: 0;
+    text-align: center;
+    list-style-type: none;
+    background-color: #afffaf;
+    padding:5px;
+}
+.container .form-center {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+}
+
+
+.form {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    border: 1px solid #efefef;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 100%;
+}
+
+.form label, .form input, .form a {
+    width: 100%;
+}
+
+.form input {
+    height: 30px;
+    font-family: 'Skranji', cursive;
+	font-size: 16px;
+	border: 1px solid #efefef;
+	border-radius: 5px;
+	padding: 0 10px;
+}
+.form input, .form button, .form a {
+    line-height: 30px;
+    margin: 10px 0;
+}
+
+.form button, .form a {
+    width: 50%;
+    max-width: 100px;
+    cursor: pointer;
+}
+.restaurants {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px;
+    border: 1px solid #efefef;
+    padding: 0 10px;
+}
+
+.restaurant__name{
+    width:50%;
+}
+
+.restaurant {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-bottom: 1px solid #efefef;
+}
+
+.restaurant > a {
+    margin: 1em;
+}
+
+.menu-nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 100%;
+    border-bottom: 1px solid #efefef;
+    padding-bottom: 10px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px;
+}
+.menu-item {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border-bottom: 1px solid #efefef;
+    width:100%;
+}
+.menu-item__name {
+    width:50%;
+    margin: 1em;
+}
+
+.menu-item__price {
+    margin: 1em;
+}
+
+.menu-item__action {
+    margin: 1em;
+}
+.menu-item__description {
+    width: 100%;
+    padding: 0 1em;
+}
+.menu-item > a {
+    margin: 1em;
+}
