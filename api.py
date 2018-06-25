@@ -31,7 +31,8 @@ DBSession = sessionmaker(bind=engine)
 def Catalog():
     session = DBSession()
     categories = session.query(Category).all()
-    return render_template('catalog.html', categories=categories)
+    username = login_session['username'] if 'username' in login_session.keys() else None
+    return render_template('catalog.html', categories=categories, username=username)
 
 # Admin access only.
 @app.route('/categories')
@@ -180,13 +181,7 @@ def gconnect():
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
     print(login_session)
-    output = ''
-    output += '<h1>Welcome, '
-    output += login_session['username']
-    output += '!</h1>'
-    output += '<img src="'
-    output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output = 'Done!'
     flash("you are now logged in as %s" % login_session['username'])
     print("done!")
     return output
@@ -278,10 +273,10 @@ def disconnect():
         del login_session['user_id']
         del login_session['provider']
         flash("You have successfully been logged out.")
-        return redirect(url_for('Restaurants'))
+        return redirect(url_for('Catalog'))
     else:
         flash("You were not logged in")
-        return redirect(url_for('Restaurants'))
+        return redirect(url_for('Catalog'))
 
 @app.route('/fbdisconnect')
 def fbdisconnect():
@@ -316,7 +311,7 @@ def gdisconnect():
 
 def createUser(login_session) :
     session = DBSession()
-    newUser = User(name=login_session['username'], email=login_session['email'], picture=login_session['picture'])
+    newUser = User(email=login_session['email'])
     session.add(newUser)
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()

@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 import hashlib
 import random, string
-from itsdangerous import(TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
 
 Base = declarative_base()
@@ -18,35 +17,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     email = Column(String(300), unique=True, nullable=False)
-    password = Column(String(64), nullable=False)
     first_name = Column(String(100))
     last_name = Column(String(100))
-    is_admin = Column(Boolean, default=False)
+    items = relationship("Item", backref="user")
 
-    def __init__(self, email, password):
-        self.email = email
-        self.password = self.encrypt_password(password)
 
-    def encrypt_password(self, password):
-        return hashlib.sha224(password).hexdigest()
-
-    def verify_password(self, password):
-        return self.password == hashlib.sha224(password).hexdigest()[0:63]
-
-    def generate_auth_token(self, expiration=600):
-        s = Serializer(secret_key, expires_in=expiration)
-        return s.dumps({'id': self.id})
-
-    @staticmethod
-    def verify_token(token):
-        s = Serializer(secret_key)
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None
-        except BadSignature:
-            return None
-        return data['id']
 
 # TODO: Create Category
 
@@ -56,6 +31,7 @@ class Category(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), unique=True, nullable=False)
     label = Column(String(100), nullable=False)
+    items = relationship("Item", backref="category")
 
     def __init__(self, name):
         self.label = name
@@ -68,6 +44,16 @@ class Category(Base):
             'label': self.label,
             'id': self.id,
         }
+
+
 # TODO: Create Item
+class Item(Base):
+    __tablename__ = "item"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200), unique=True)
+    description = Column(String)
+    category_id = Column(Integer, ForeignKey("category.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
+
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.create_all(engine)

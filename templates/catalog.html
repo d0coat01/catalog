@@ -1,6 +1,11 @@
 {% include 'header.html' %}
 <div class="container">
 <h1>Danslist</h1>
+{% if username %}
+<h1>{{username}} <a href="{{url_for('disconnect')}}">Logout</a></h1>
+{% else %}
+<h1><a href="{{url_for('showLogin')}}">Login</a></h1>
+{% endif %}
 {% with messages = get_flashed_messages() %}
 {% if messages %}
 <ul class="flash-messages">
