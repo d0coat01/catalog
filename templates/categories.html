@@ -10,11 +10,11 @@
 </ul>
 {% endif %}
 {% endwith %}
-<div class="restaurants">
+<div class="categories">
 <a href="{{url_for('newCategory')}}">Add Category</a>
 {% for c in categories %}
-<div class="restaurant">
-    <p class="restaurant__name">{{c.label}}</p>
+<div class="category">
+    <p class="category__name">{{c.label}}</p>
     <a href="{{url_for('editCategory', category_name=c.name)}}"><i class="fas fa-edit"></i></a>
     <a href="{{url_for('deleteCategory', category_name=c.name)}}"><i class="fas fa-trash"></i></a>
 </div>

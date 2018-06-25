@@ -90,7 +90,7 @@ a:hover {
     max-width: 100px;
     cursor: pointer;
 }
-.restaurants {
+.categories {
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -99,18 +99,18 @@ a:hover {
     padding: 0 10px;
 }
 
-.restaurant__name{
+.category__name{
     width:50%;
 }
 
-.restaurant {
+.category {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     border-bottom: 1px solid #efefef;
 }
 
-.restaurant > a {
+.category > a {
     margin: 1em;
 }
 

@@ -92,6 +92,13 @@ def showLogin():
     login_session['state'] = state
     return render_template('login.html', STATE=state)
 
+@app.route('/connect', methods=['POST'])
+def connect():
+    # Check to see if valid user
+    return "Logging in..."
+    # Verify user.
+    # Generate and assign auth token to login_session.
+    # Return to previous page or go to home page.
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
