@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -57,9 +57,9 @@ class Category(Base):
     name = Column(String(100), unique=True, nullable=False)
     label = Column(String(100), nullable=False)
 
-    def __init__(self, label):
-        self.label = label
-        self.name = label.lower()
+    def __init__(self, name):
+        self.label = name
+        self.name = name.lower()
 
     @property
     def serialize(self):
@@ -70,5 +70,4 @@ class Category(Base):
         }
 # TODO: Create Item
 engine = create_engine('sqlite:///catalog.db')
-
 Base.metadata.create_all(engine)

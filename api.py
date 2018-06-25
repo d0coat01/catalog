@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, jsonify, f
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import sys
+import bleach
 sys.path.append('./db')
 from setup import Base, User, Category
 from flask import session as login_session
@@ -28,14 +29,16 @@ DBSession = sessionmaker(bind=engine)
 @app.route('/')
 @app.route('/catalog')
 def Catalog():
-    categories = [{"name": "Tea"},{"name": "Coffee"},{"name": "Oats"}]
+    session = DBSession()
+    categories = session.query(Category).all()
     return render_template('catalog.html', categories=categories)
 
 # Admin access only.
 @app.route('/categories')
 def Categories():
-    categories = [{"name": "Tea"},{"name": "Coffee"},{"name": "Oats"}]
-    return render_template('catalog.html', categories=categories)
+    session = DBSession()
+    categories = session.query(Category).all()
+    return render_template('categories.html', categories=categories)
 
 @app.route('/categories/JSON')
 def CategoriesJSON():
@@ -44,15 +47,42 @@ def CategoriesJSON():
     return jsonify(Categories=[r.serialize for r in categories])
 @app.route('/categories/new', methods=['GET', 'POST'])
 def newCategory():
-    return "new category"
+    session = DBSession()
+    if request.method == 'GET':
+        return render_template('newcategory.html')
+    if request.method == 'POST':
+        new_category = Category(
+            name=bleach.clean(request.form['name'])
+        )
+        session.add(new_category)
+        session.commit()
+        flash(new_category.label + " created.")
+        return redirect(url_for('Categories'))
 
 @app.route('/categories/<string:category_name>/edit', methods=['GET', 'POST'])
 def editCategory(category_name):
-    return "edit category: " + category_name
-
+    session = DBSession()
+    category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    if request.method == 'GET':
+        return render_template('editcategory.html', category=category)
+    if request.method == 'POST':
+        category.label=bleach.clean(request.form['name'])
+        category.name = category.label.lower()
+        session.add(category)
+        session.commit()
+        flash(category.label + " updated.")
+        return redirect(url_for('Categories'))
 @app.route('/categories/<string:category_name>/delete', methods=['GET', 'POST'])
 def deleteCategory(category_name):
-    return "delete category: " + category_name
+    session = DBSession()
+    category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    if request.method == 'GET':
+        return render_template('deletecategory.html', category=category)
+    if request.method == 'POST':
+        session.delete(category)
+        session.commit()
+        flash(category.label + " deleted.")
+        return redirect(url_for('Categories'))
 
 @app.route('/login')
 def showLogin():
