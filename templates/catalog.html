@@ -1,11 +1,6 @@
 {% include 'header.html' %}
 <div class="container">
-<h1>Danslist</h1>
-{% if username %}
-<h1>{{username}} <a href="{{url_for('disconnect')}}">Logout</a></h1>
-{% else %}
-<h1><a href="{{url_for('showLogin')}}">Login</a></h1>
-{% endif %}
+{% include 'navbar.html' %}
 {% with messages = get_flashed_messages() %}
 {% if messages %}
 <ul class="flash-messages">
@@ -15,15 +10,19 @@
 </ul>
 {% endif %}
 {% endwith %}
-<aside class="categories">
-{% for c in categories %}
-<div class="category">
-    <p class="category__name">{{c.label}}</p>
+<div class="catalog">
+    <aside class="categories">
+    <h1 class="category__header">Categories</h1>
+    {% for c in categories %}
+    <a class="category {{'category--selected' if category == c}}" href="{{url_for('CategoryItems', category_name=c.name)}}">
+        <p class="category__name">{{c.label}}</p>
+    </a>
+    {% endfor %}
+    </aside>
+    <section class="items">
+        <h1 class="items__header">Latest Items</h1>
+        <ul class="items__"></ul>
+    </section>
 </div>
-{% endfor %}
-</aside>
-<section>
-    <h1>Latest Items</h1>
-</section>
 </div>
 {% include 'footer.html' %}

@@ -1,0 +1,8 @@
+<nav class="nav">
+    <h1 class="nav__item">Danslist</h1>
+    {% if username %}
+    <h1 class="nav__item">{{username}} <a href="{{url_for('disconnect')}}">Logout</a></h1>
+    {% else %}
+    <h1 class="nav__item"><a href="{{url_for('showLogin')}}">Login</a></h1>
+    {% endif %}
+</nav>

@@ -5,10 +5,12 @@ body {
 	margin: 0;
 	background-color: #fb0;
 }
+
 h1 {
     margin: 10px 0;
     text-align:center;
 }
+
 a {
   color: #2196F3;
   text-decoration: none;
@@ -39,6 +41,19 @@ a:hover {
 	align-items:center;
 	max-width: 1000px;
 	margin: 0 auto;
+	min-height: 100vh;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    background-color: #e8e8e8;
+    padding: 10px 0;
+}
+
+.nav__item {
+    margin: 0 20px;
 }
 
 .flash-messages {
@@ -92,18 +107,38 @@ a:hover {
     max-width: 100px;
     cursor: pointer;
 }
+.login {
+    display: flex;
+    flex-direction: column;
+    align-items:center;
+}
+.catalog {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border-right: 1px solid #efefef;
+}
 .categories {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 600px;
+    width: 50%;
+    max-width: 200px;
     border: 1px solid #efefef;
-    padding: 0 10px;
     background-color: white;
+    text-align:center;
 }
 
-.category__name{
-    width:50%;
+.category__header {
+    border-bottom: 1px solid #efefef;
+    padding: 1em;
+    background-color: rgb(62, 80, 180);
+    color: white;
+    margin: 0;
+}
+
+.category__name {
+    width:100%;
+    text-align:center;
 }
 
 .category {
@@ -111,51 +146,31 @@ a:hover {
     flex-direction: row;
     justify-content: space-between;
     border-bottom: 1px solid #efefef;
+    color: black;
+}
+
+.category--selected {
+    background-color: #e8e8e8;
+}
+
+.category:hover {
+    background-color: #e8e8e8;
+    cursor: pointer;
+    color: black;
 }
 
 .category > a {
     margin: 1em;
 }
 
-.menu-nav {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-    width: 100%;
-    border-bottom: 1px solid #efefef;
-    padding-bottom: 10px;
-}
-
-.menu {
+.items {
     display: flex;
     flex-direction: column;
+    align-items: center;
     width: 100%;
-    max-width: 600px;
-}
-.menu-item {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    border-bottom: 1px solid #efefef;
-    width:100%;
-}
-.menu-item__name {
-    width:50%;
-    margin: 1em;
+    background-color: white;
 }
 
-.menu-item__price {
-    margin: 1em;
-}
-
-.menu-item__action {
-    margin: 1em;
-}
-.menu-item__description {
-    width: 100%;
-    padding: 0 1em;
-}
-.menu-item > a {
-    margin: 1em;
+.items__header {
+    text-align:center;
 }
