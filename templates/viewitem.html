@@ -1,10 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% include 'header.html' %}
+<div class="container">
+{% include 'navbar.html' %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<ul class="flash-messages">
+    {% for message in messages %}
+    <li>{{message}}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+    <section class="viewitem">
+        <h1>{{item.label}}</h1>
+        <p class="viewitem__description">
+            {{item.description}}
+        </p>
+        <div class="viewitem__actions">
+            <a href="{{url_for('editItem', category_name=category.name, item_name=item.name)}}">Edit</a>
+            <a href="{{url_for('deleteItem', category_name=category.name, item_name=item.name)}}">Delete</a>
+        </div>
+    </section>
+</div>
+{% include 'footer.html' %}

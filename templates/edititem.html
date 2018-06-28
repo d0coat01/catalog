@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% include 'header.html' %}
+<div class="container">
+    <div class="form-center">
+        <h1>Edit Item</h1>
+        <form class="form" action="{{url_for('editItem',category_name=category.name, item_name=item.name)}}" method='POST'>
+            <label for="name">Name:</label>
+            <input type='text' name='name' id="name" autofocus value="{{item.label}}">
+            <label for="description">Description: </label>
+            <textarea name="description" id="description">{{item.description}}</textarea>
+            <label for="category">Category:</label>
+            <select name="category">
+                {% for c in categories %}
+                <option value="{{c.id}}" {{"selected" if category and c.name==category.name}}>{{c.label}}</option>
+                {% endfor %}
+            </select>
+            <div class="form__action">
+                <a href="{{url_for('Catalog')}}">Cancel</a>
+                <button type="submit" value="Save">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% include 'footer.html' %}

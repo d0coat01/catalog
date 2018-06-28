@@ -20,8 +20,23 @@
     {% endfor %}
     </aside>
     <section class="items">
-        <h1 class="items__header">Latest Items</h1>
-        <ul class="items__"></ul>
+        <h1 class="items__header">Latest Items {{'in ' + category.label + ' (' + items|length|string + ')' if category and category.label}}</h1>
+        {% if category and category.name %}
+        <a href="{{url_for('newItem', category_name=category.name)}}">Add Item</a>
+        {% else %}
+        <a href="{{url_for('newItem')}}">Add Item</a>
+        {% endif %}
+        <ul class="items__list">
+            {% for i in items %}
+            <li class="item">
+                <a class="item__link" href="{{url_for('viewItem', category_name=i.category.name, item_name=i.name)}}">{{i.label}}
+                    {% if not category or not category.name %}
+                    <span class="item__category">({{i.category.label}})</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
     </section>
 </div>
 </div>

@@ -56,6 +56,10 @@ a:hover {
     margin: 0 20px;
 }
 
+.nav__header {
+    color: black;
+}
+
 .flash-messages {
     padding: 0;
     text-align: center;
@@ -85,6 +89,9 @@ a:hover {
     max-width: 100%;
 }
 
+.form label {
+	color: darkgray
+}
 .form label, .form input, .form a {
     width: 100%;
 }
@@ -102,10 +109,29 @@ a:hover {
     margin: 10px 0;
 }
 
+.form textarea {
+    width: 100%;
+    border-radius: 5px;
+    border-color: #efefef;
+    font-family: 'Skranji', cursive;
+	font-size: 16px;
+}
+
 .form button, .form a {
     width: 50%;
     max-width: 100px;
     cursor: pointer;
+}
+
+.form select {
+    width: 50%;
+}
+.form__action {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 .login {
     display: flex;
@@ -116,21 +142,19 @@ a:hover {
     display: flex;
     flex-direction: row;
     width: 100%;
-    border-right: 1px solid #efefef;
 }
 .categories {
-    display: flex;
-    flex-direction: column;
     width: 50%;
     max-width: 200px;
     border: 1px solid #efefef;
     background-color: white;
     text-align:center;
+    height:90vh;
+    overflow-y:auto;
 }
 
 .category__header {
     border-bottom: 1px solid #efefef;
-    padding: 1em;
     background-color: rgb(62, 80, 180);
     color: white;
     margin: 0;
@@ -170,7 +194,48 @@ a:hover {
     width: 100%;
     background-color: white;
 }
-
+.items__list {
+    width: 100%;
+    max-width: 400px;
+    list-style: none;
+    padding: 0;
+}
+.item {
+    width: 100%;
+    border-bottom: 1px solid #efefef;
+}
+.item__link {
+    width: 100%;
+    display:inline-block;
+    text-align:left;
+}
+.item__link:hover {
+    background-color:#efefef;
+}
+.item__category {
+    color: darkgray;
+}
 .items__header {
     text-align:center;
+}
+
+.viewitem {
+    display:flex;
+    flex-direction:column;
+    align-items: center;
+    min-height:80vh;
+    background-color:white;
+    width: 100%;
+}
+
+.viewitem__description {
+}
+
+.viewitem__actions {
+    display:flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 200px;
 }
