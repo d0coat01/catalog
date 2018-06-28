@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 import hashlib
 import random, string
+from flask import jsonify
 
 
 Base = declarative_base()
@@ -46,6 +47,17 @@ class Category(Base):
             'id': self.id,
         }
 
+    @property
+    def serialize_items(self):
+        items = [r.serialize for r in self.items]
+        return {
+            'name': self.name,
+            'label': self.label,
+            'id': self.id,
+            'items': items
+
+        }
+
 # TODO: Create Item
 class Item(Base):
     __tablename__ = "item"
@@ -63,5 +75,14 @@ class Item(Base):
         self.category_id = category_id
         self.user_id = user_id
         self.description = description
+
+    @property
+    def serialize(self):
+        return {
+            'name': self.name,
+            'label': self.label,
+            'description': self.description,
+            'id': self.id,
+        }
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.create_all(engine)

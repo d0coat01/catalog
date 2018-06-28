@@ -15,10 +15,12 @@
         <p class="viewitem__description">
             {{item.description}}
         </p>
+        {% if username and user_id==item.user_id %}
         <div class="viewitem__actions">
             <a href="{{url_for('editItem', category_name=category.name, item_name=item.name)}}">Edit</a>
             <a href="{{url_for('deleteItem', category_name=category.name, item_name=item.name)}}">Delete</a>
         </div>
+        {% endif %}
     </section>
 </div>
 {% include 'footer.html' %}

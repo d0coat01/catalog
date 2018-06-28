@@ -39,6 +39,18 @@ def Catalog():
     username = login_session['username'] if 'username' in login_session.keys() else None
     return render_template('catalog.html', categories=categories, username=username, items=items)
 
+@app.route('/catalog/JSON')
+def CatalogJSON():
+    session = DBSession()
+    categories = session.query(Category).filter(Item.category_id==Category.id).order_by(Category.name).all()
+    return jsonify(categories=[r.serialize_items for r in categories])
+
+@app.route('/catalog/items/JSON')
+def CatalogItemsJSON():
+    session = DBSession()
+    items = session.query(Item).order_by(Item.name).all()
+    return jsonify(items=[r.serialize for r in items])
+
 @app.route('/catalog/<string:category_name>/items')
 def CategoryItems(category_name):
     session = DBSession()
@@ -47,6 +59,13 @@ def CategoryItems(category_name):
     items = session.query(Item).filter_by(category_id=category.id).filter(Item.category_id==Category.id).order_by(Item.id.desc()).all()
     username = login_session['username'] if 'username' in login_session.keys() else None
     return render_template('catalog.html', items=items, categories=categories, username=username, category=category)
+
+@app.route('/catalog/<string:category_name>/items/JSON')
+def CategoryItemsJSON(category_name):
+    session = DBSession()
+    category = session.query(Category).filter(Item.category_id==Category.id).filter_by(name=bleach.clean(category_name)).one()
+    return jsonify(category=category.serialize_items)
+
 # Admin access only.
 @app.route('/categories')
 def Categories():
@@ -58,7 +77,7 @@ def Categories():
 def CategoriesJSON():
     session = DBSession()
     categories = session.query(Category).order_by(Category.name).all()
-    return jsonify(Categories=[r.serialize for r in categories])
+    return jsonify(categories=[r.serialize for r in categories])
 
 @app.route('/categories/new', methods=['GET', 'POST'])
 def newCategory():
@@ -142,9 +161,11 @@ def viewItem(category_name, item_name):
     except:
         return "That item wasn't found :("
     username = None
+    user_id = None
     if 'username' in login_session:
         username = login_session['username']
-    return render_template('viewitem.html', item=item, category=category, username=username)
+        user_id = login_session['user_id']
+    return render_template('viewitem.html', item=item, category=category, username=username, user_id = user_id)
 
 @app.route('/catalog/<string:category_name>/item/<string:item_name>/edit', methods=['GET', 'POST'])
 def editItem(category_name, item_name):
@@ -159,6 +180,8 @@ def editItem(category_name, item_name):
         item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
     except:
         return "That item wasn't found :("
+    if login_session['user_id'] != item.user_id:
+        return "You don't have access to this item."
     categories = session.query(Category).order_by(Category.name).all()
     if request.method == 'GET':
         return render_template('edititem.html', category=category, categories=categories, item=item)
@@ -174,6 +197,8 @@ def editItem(category_name, item_name):
 
 @app.route('/catalog/<string:category_name>/item/<string:item_name>/delete', methods=['GET', 'POST'])
 def deleteItem(category_name, item_name):
+    if 'user_id' not in login_session:
+        return redirect(url_for('showLogin'))
     session = DBSession()
     try:
         category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
@@ -183,6 +208,8 @@ def deleteItem(category_name, item_name):
         item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
     except:
         return "That item wasn't found :("
+    if login_session['user_id'] != item.user_id:
+        return "You don't have access to this item."
     if request.method == 'GET':
         return render_template('deleteitem.html', category=category, item=item)
     if request.method == 'POST':
