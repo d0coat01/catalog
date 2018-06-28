@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import sys
 import bleach
+# append db directory to python path so we can import sqlalchemy classes.
 sys.path.append('./db')
 from setup import Base, User, Category, Item
 from flask import session as login_session
@@ -17,29 +18,33 @@ import json
 from flask import make_response
 import requests
 
+# Copy your Google oauth2 credentials to client_secrets.json
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Danslist"
 app = Flask(__name__)
 
+# From root directory of this application, run python db/setup.py to create database.
 engine = create_engine('sqlite:///catalog.db', pool_pre_ping=True)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
+# initializing DBSession() variable at beginning of each function to avoid Flask error.
 
 @app.route('/')
 @app.route('/catalog')
 def Catalog():
     session = DBSession()
-    categories = session.query(Category).all()
+    categories = session.query(Category).order_by(Category.name).all()
+    items = session.query(Item).filter(Item.category_id==Category.id).order_by(Item.id.desc()).all()
     username = login_session['username'] if 'username' in login_session.keys() else None
-    return render_template('catalog.html', categories=categories, username=username)
+    return render_template('catalog.html', categories=categories, username=username, items=items)
 
 @app.route('/catalog/<string:category_name>/items')
 def CategoryItems(category_name):
     session = DBSession()
     category = session.query(Category).filter_by(name=bleach.clean(category_name)).one()
-    categories = session.query(Category).all()
-    items = session.query(Item).filter_by(category_id=category.id).all()
+    categories = session.query(Category).order_by(Category.name).all()
+    items = session.query(Item).filter_by(category_id=category.id).filter(Item.category_id==Category.id).order_by(Item.id.desc()).all()
     username = login_session['username'] if 'username' in login_session.keys() else None
     return render_template('catalog.html', items=items, categories=categories, username=username, category=category)
 # Admin access only.
@@ -52,7 +57,7 @@ def Categories():
 @app.route('/categories/JSON')
 def CategoriesJSON():
     session = DBSession()
-    categories = session.query(Category).all()
+    categories = session.query(Category).order_by(Category.name).all()
     return jsonify(Categories=[r.serialize for r in categories])
 
 @app.route('/categories/new', methods=['GET', 'POST'])
@@ -95,6 +100,96 @@ def deleteCategory(category_name):
         flash(category.label + " deleted.")
         return redirect(url_for('Categories'))
 
+@app.route('/catalog/items/new', methods=['GET','POST'])
+@app.route('/catalog/<string:category_name>/items/new', methods=['GET','POST'])
+def newItem(category_name=None):
+    if 'user_id' not in login_session:
+        return redirect(url_for('showLogin'))
+    session = DBSession()
+    categories = session.query(Category).order_by(Category.label).all()
+    category = None
+    if category_name:
+        try:
+            category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+        except:
+            return "That category wasn't found :("
+
+    if request.method == 'GET':
+        return render_template('newitem.html', category=category, categories=categories)
+    if request.method == 'POST':
+        new_item = Item(
+            name=bleach.clean(request.form['name']),
+            description=bleach.clean(request.form['description']),
+            category_id=bleach.clean(request.form['category']),
+            user_id=login_session['user_id']
+        )
+        session.add(new_item)
+        session.commit()
+        flash(new_item.label + " created.")
+        if category:
+            return redirect(url_for('CategoryItems', category_name=category.name))
+        return redirect(url_for('Catalog'))
+
+@app.route('/catalog/<string:category_name>/item/<string:item_name>')
+def viewItem(category_name, item_name):
+    session = DBSession()
+    try:
+        category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    except:
+        return "That category wasn't found :("
+    try:
+        item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
+    except:
+        return "That item wasn't found :("
+    username = None
+    if 'username' in login_session:
+        username = login_session['username']
+    return render_template('viewitem.html', item=item, category=category, username=username)
+
+@app.route('/catalog/<string:category_name>/item/<string:item_name>/edit', methods=['GET', 'POST'])
+def editItem(category_name, item_name):
+    if 'user_id' not in login_session:
+        return redirect(url_for('showLogin'))
+    session = DBSession()
+    try:
+        category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    except:
+        return "That category wasn't found :("
+    try:
+        item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
+    except:
+        return "That item wasn't found :("
+    categories = session.query(Category).order_by(Category.name).all()
+    if request.method == 'GET':
+        return render_template('edititem.html', category=category, categories=categories, item=item)
+    if request.method == 'POST':
+        item.label = bleach.clean(request.form['name'])
+        item.name = item.label.lower()
+        item.description = bleach.clean(request.form['description'])
+        item.category_id = bleach.clean(request.form['category'])
+        session.add(item)
+        session.commit()
+        flash(item.label + " updated.")
+        return redirect(url_for('CategoryItems', category_name=category.name))
+
+@app.route('/catalog/<string:category_name>/item/<string:item_name>/delete', methods=['GET', 'POST'])
+def deleteItem(category_name, item_name):
+    session = DBSession()
+    try:
+        category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    except:
+        return "That category wasn't found :("
+    try:
+        item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
+    except:
+        return "That item wasn't found :("
+    if request.method == 'GET':
+        return render_template('deleteitem.html', category=category, item=item)
+    if request.method == 'POST':
+        session.delete(item)
+        session.commit()
+        flash(item.label + " deleted.")
+        return redirect(url_for('CategoryItems', category_name = category.name))
 @app.route('/login')
 def showLogin():
     # Create anti-forgery state token
@@ -247,12 +342,12 @@ def createUser(login_session) :
     user = session.query(User).filter_by(email=login_session['email']).one()
     return user.id
 
-def getUserInfo(user_id) :
+def getUserInfo(user_id):
     session = DBSession()
     try :
         user = session.query(User).filter_by(id=user_id).one()
         return user
-    except :
+    except:
         return None
 
 def getUserId(email) :

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, event
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, UniqueConstraint
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -45,15 +46,22 @@ class Category(Base):
             'id': self.id,
         }
 
-
 # TODO: Create Item
 class Item(Base):
     __tablename__ = "item"
     id = Column(Integer, primary_key=True)
-    name = Column(String(200), unique=True)
+    name = Column(String(200), nullable=False)
+    label = Column(String(200), nullable=False)
     description = Column(String)
     category_id = Column(Integer, ForeignKey("category.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
+    __tableargs__ = (UniqueConstraint('user_id', 'category_id', 'name', name='unique_index_1'))
 
+    def __init__(self, name, description, category_id, user_id):
+        self.label = name
+        self.name = name.lower()
+        self.category_id = category_id
+        self.user_id = user_id
+        self.description = description
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.create_all(engine)
