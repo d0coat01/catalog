@@ -137,17 +137,23 @@ def newItem(category_name=None):
         return render_template('newitem.html', category=category, categories=categories)
     if request.method == 'POST':
         new_item = Item(
-            name=bleach.clean(request.form['name']),
+            label=bleach.clean(request.form['name']),
             description=bleach.clean(request.form['description']),
             category_id=bleach.clean(request.form['category']),
             user_id=login_session['user_id']
         )
-        session.add(new_item)
-        session.commit()
+        new_item = addItem(new_item, session)
         flash(new_item.label + " created.")
         if category:
             return redirect(url_for('CategoryItems', category_name=category.name))
         return redirect(url_for('Catalog'))
+
+def addItem(new_item, session):
+    new_item.name = new_item.label.lower()
+    if len(new_item.name) < 1: raise ValueError('Name cannot be empty.')
+    session.add(new_item)
+    session.commit()
+    return new_item
 
 @app.route('/catalog/<string:category_name>/item/<string:item_name>')
 def viewItem(category_name, item_name):
@@ -187,11 +193,9 @@ def editItem(category_name, item_name):
         return render_template('edititem.html', category=category, categories=categories, item=item)
     if request.method == 'POST':
         item.label = bleach.clean(request.form['name'])
-        item.name = item.label.lower()
         item.description = bleach.clean(request.form['description'])
         item.category_id = bleach.clean(request.form['category'])
-        session.add(item)
-        session.commit()
+        item = addItem(item, session)
         flash(item.label + " updated.")
         return redirect(url_for('CategoryItems', category_name=category.name))
 
@@ -217,6 +221,7 @@ def deleteItem(category_name, item_name):
         session.commit()
         flash(item.label + " deleted.")
         return redirect(url_for('CategoryItems', category_name = category.name))
+
 @app.route('/login')
 def showLogin():
     # Create anti-forgery state token
@@ -242,7 +247,6 @@ def gconnect():
         return response
     # Obtain authorization code
     code = request.data
-
     try:
         # Upgrade the authorization code into a credentials object
         oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
@@ -303,7 +307,6 @@ def gconnect():
 
     login_session['provider'] = 'google'
     login_session['username'] = data['name']
-    login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
     # Check if user exists.
@@ -312,10 +315,8 @@ def gconnect():
     if user_id is None:
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
-    print(login_session)
     output = 'Done!'
     flash("you are now logged in as %s" % login_session['username'])
-    print("done!")
     return output
 
 # Disconnect based on provider
@@ -326,12 +327,8 @@ def disconnect():
             gdisconnect()
             del login_session['gplus_id']
             del login_session['access_token']
-        if login_session['provider'] == 'facebook':
-            fbdisconnect()
-            del login_session['facebook_id']
         del login_session['username']
         del login_session['email']
-        del login_session['picture']
         del login_session['user_id']
         del login_session['provider']
         flash("You have successfully been logged out.")
@@ -368,14 +365,6 @@ def createUser(login_session) :
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()
     return user.id
-
-def getUserInfo(user_id):
-    session = DBSession()
-    try :
-        user = session.query(User).filter_by(id=user_id).one()
-        return user
-    except:
-        return None
 
 def getUserId(email) :
     session = DBSession()

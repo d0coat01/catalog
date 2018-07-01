@@ -12,7 +12,7 @@
 {% endwith %}
 <div class="catalog">
     <aside class="categories">
-    <h1 class="category__header">Categories</h1>
+        <a href="{{url_for('Categories')}}"><h1 class="category__header">Categories</h1></a>
     {% for c in categories %}
     <a class="category {{'category--selected' if category == c}}" href="{{url_for('CategoryItems', category_name=c.name)}}">
         <p class="category__name">{{c.label}}</p>
