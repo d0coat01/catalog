@@ -8,7 +8,7 @@ A catalog of items. Each item belongs to one catagory.
 1. [Vagrant](https://www.vagrantup.com/)
 2. `git clone https://github.com/d0coat01/catalog danslist`
 3. `cd danslist`
-4. `vagrant up && vagrant ssh``vagrant ssh`
+4. `vagrant up && vagrant ssh`
 5. `cd /vagrant/danslist`
 6. Copy and paste your client secrets json to `client_secrets.json`.
 7. `python db/setup.py && python testdata.py && python api.py`
