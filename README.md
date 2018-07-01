@@ -1,6 +1,8 @@
 # Danslist
 
 A catalog of items. Each item belongs to one catagory.
+## Requirements
+* A Valid client_secrets json file from Google's oauth2 service.
 
 ## Installation
 1. [Vagrant](https://www.vagrantup.com/)
@@ -10,8 +12,9 @@ A catalog of items. Each item belongs to one catagory.
 5. `vagrant ssh`
 6. `cd /vagrant`
 7. `cd danslist`
-8. `python db/setup.py testdata.py api.py`
-9. [Open App](http://localhost:5000/)
+8. Copy and paste your client secrets json to `client_secrets.json`.
+9. `python db/setup.py testdata.py api.py`
+10. [Open App](http://localhost:5000/)
 
 ## How permissions work
 I added CRUD functionality for categories as well as items. Category write permissions, however, are locked behind a `is_admin` boolean flag. If you wish to be able to edit categories, the easiest way would be to edit `testdata.py`'s `User1` to your google login email and setting the `is_admin` flag to `True`.
