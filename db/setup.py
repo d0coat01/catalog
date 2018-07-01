@@ -1,17 +1,11 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, UniqueConstraint
-
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
-import hashlib
 import random, string
-from flask import jsonify
 
 
 Base = declarative_base()
-
-secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
-
 
 # TODO: Create tests for user table
 class User(Base):
@@ -19,8 +13,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     email = Column(String(300), unique=True, nullable=False)
-    first_name = Column(String(100))
-    last_name = Column(String(100))
+    username = Column(String(100))
+    is_admin = Column(Boolean, default=False)
     items = relationship("Item", backref="user")
 
 

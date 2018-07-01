@@ -81,6 +81,9 @@ def CategoriesJSON():
 
 @app.route('/categories/new', methods=['GET', 'POST'])
 def newCategory():
+    if 'is_admin' not in login_session or not login_session['is_admin']:
+        flash("You don't have access to that.")
+        return redirect(url_for('Catalog'))
     session = DBSession()
     if request.method == 'GET':
         return render_template('newcategory.html')
@@ -95,6 +98,9 @@ def newCategory():
 
 @app.route('/categories/<string:category_name>/edit', methods=['GET', 'POST'])
 def editCategory(category_name):
+    if 'is_admin' not in login_session or not login_session['is_admin']:
+        flash("You don't have access to that.")
+        return redirect(url_for('Catalog'))
     session = DBSession()
     category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
     if request.method == 'GET':
@@ -109,6 +115,9 @@ def editCategory(category_name):
 
 @app.route('/categories/<string:category_name>/delete', methods=['GET', 'POST'])
 def deleteCategory(category_name):
+    if 'is_admin' not in login_session or not login_session['is_admin']:
+        flash("You don't have access to that.")
+        return redirect(url_for('Catalog'))
     session = DBSession()
     category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
     if request.method == 'GET':
@@ -230,14 +239,6 @@ def showLogin():
     login_session['state'] = state
     return render_template('login.html', STATE=state)
 
-@app.route('/connect', methods=['POST'])
-def connect():
-    # Check to see if valid user
-    return "Logging in..."
-    # Verify user.
-    # Generate and assign auth token to login_session.
-    # Return to previous page or go to home page.
-
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token
@@ -315,6 +316,8 @@ def gconnect():
     if user_id is None:
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
+    userinfo = getUserInfo(user_id)
+    login_session['is_admin'] = userinfo.is_admin
     output = 'Done!'
     flash("you are now logged in as %s" % login_session['username'])
     return output
@@ -374,9 +377,17 @@ def getUserId(email) :
     except :
         return None
 
+def getUserInfo(id) :
+    session = DBSession()
+    try :
+        user = session.query(User).filter_by(id=id).one()
+        return user
+    except :
+        return None
+
 
 if __name__ == '__main__':
-    app.secret_key = "super_secret_key"
+    app.secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
     # Uncomment for https
