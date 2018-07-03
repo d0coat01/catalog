@@ -1,13 +1,12 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, UniqueConstraint
+from sqlalchemy import (Column, ForeignKey, Integer,
+                        String, Boolean, UniqueConstraint)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
-import random, string
-
 
 Base = declarative_base()
 
-# TODO: Create tests for user table
+
 class User(Base):
     __tablename__ = "user"
 
@@ -16,10 +15,6 @@ class User(Base):
     username = Column(String(100))
     is_admin = Column(Boolean, default=False)
     items = relationship("Item", backref="user")
-
-
-
-# TODO: Create Category
 
 
 class Category(Base):
@@ -52,7 +47,7 @@ class Category(Base):
 
         }
 
-# TODO: Create Item
+
 class Item(Base):
     __tablename__ = "item"
     id = Column(Integer, primary_key=True)
@@ -62,7 +57,7 @@ class Item(Base):
     category_id = Column(Integer, ForeignKey("category.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     __table_args__ = (
-        UniqueConstraint('user_id', 'category_id', 'name',  name='unique_index_1'),
+        UniqueConstraint('category_id', 'name',  name='unique_index_1'),
     )
 
     def validate_name(self, name):
@@ -78,5 +73,7 @@ class Item(Base):
             'description': self.description,
             'id': self.id,
         }
+
+
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.create_all(engine)

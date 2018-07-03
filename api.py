@@ -1,15 +1,12 @@
-from flask import Flask, render_template, redirect, url_for, request, jsonify, flash
+from flask import Flask, render_template, redirect, url_for
+from flask import request, jsonify, flash
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import sys
+from sqlalchemy.exc import SQLAlchemyError
 import bleach
-# append db directory to python path so we can import sqlalchemy classes.
-sys.path.append('./db')
-from setup import Base, User, Category, Item
 from flask import session as login_session
 import random
 import string
-
 # IMPORTS FOR THIS STEP
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
@@ -17,6 +14,7 @@ import httplib2
 import json
 from flask import make_response
 import requests
+from setup import Base, User, Category, Item
 
 # Copy your Google oauth2 credentials to client_secrets.json
 CLIENT_ID = json.loads(
@@ -24,26 +22,39 @@ CLIENT_ID = json.loads(
 APPLICATION_NAME = "Danslist"
 app = Flask(__name__)
 
-# From root directory of this application, run python db/setup.py to create database.
+# From root directory of this application,
+# run python db/setup.py to create database.
 engine = create_engine('sqlite:///catalog.db', pool_pre_ping=True)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
-# initializing DBSession() variable at beginning of each function to avoid Flask error.
+# Initializing DBSession() at beginning of each function to avoid Flask error.
+
 
 @app.route('/')
 @app.route('/catalog')
 def Catalog():
     session = DBSession()
     categories = session.query(Category).order_by(Category.name).all()
-    items = session.query(Item).filter(Item.category_id==Category.id).order_by(Item.id.desc()).all()
-    username = login_session['username'] if 'username' in login_session.keys() else None
-    return render_template('catalog.html', categories=categories, username=username, items=items)
+    items = (session.query(Item)
+             .filter(Item.category_id == Category.id)
+             .order_by(Item.id.desc())
+             .all())
+    username = (login_session['username']
+                if 'username' in login_session.keys()
+                else None)
+    return render_template('catalog.html', categories=categories,
+                           username=username, items=items)
+
 
 @app.route('/catalog/JSON')
 def CatalogJSON():
     session = DBSession()
-    categories = session.query(Category).filter(Item.category_id==Category.id).order_by(Category.name).all()
+    categories = (session.query(Category)
+                  .filter(Item.category_id == Category.id)
+                  .order_by(Category.name)
+                  .all())
     return jsonify(categories=[r.serialize_items for r in categories])
+
 
 @app.route('/catalog/items/JSON')
 def CatalogItemsJSON():
@@ -51,20 +62,40 @@ def CatalogItemsJSON():
     items = session.query(Item).order_by(Item.name).all()
     return jsonify(items=[r.serialize for r in items])
 
+
 @app.route('/catalog/<string:category_name>/items')
 def CategoryItems(category_name):
     session = DBSession()
-    category = session.query(Category).filter_by(name=bleach.clean(category_name)).one()
-    categories = session.query(Category).order_by(Category.name).all()
-    items = session.query(Item).filter_by(category_id=category.id).filter(Item.category_id==Category.id).order_by(Item.id.desc()).all()
-    username = login_session['username'] if 'username' in login_session.keys() else None
-    return render_template('catalog.html', items=items, categories=categories, username=username, category=category)
+    category = (session.query(Category)
+                .filter_by(name=bleach.clean(category_name))
+                .one())
+    categories = (session.query(Category)
+                  .order_by(Category.name)
+                  .all())
+    items = (session.query(Item)
+             .filter_by(category_id=category.id)
+             .filter(Item.category_id == Category.id)
+             .order_by(Item.id.desc())
+             .all())
+    username = (login_session['username']
+                if 'username' in login_session.keys()
+                else None)
+    return render_template('catalog.html',
+                           items=items,
+                           categories=categories,
+                           username=username,
+                           category=category)
+
 
 @app.route('/catalog/<string:category_name>/items/JSON')
 def CategoryItemsJSON(category_name):
     session = DBSession()
-    category = session.query(Category).filter(Item.category_id==Category.id).filter_by(name=bleach.clean(category_name)).one()
+    category = (session.query(Category)
+                .filter(Item.category_id == Category.id)
+                .filter_by(name=bleach.clean(category_name))
+                .one())
     return jsonify(category=category.serialize_items)
+
 
 # Admin access only.
 @app.route('/categories')
@@ -73,11 +104,13 @@ def Categories():
     categories = session.query(Category).all()
     return render_template('categories.html', categories=categories)
 
+
 @app.route('/categories/JSON')
 def CategoriesJSON():
     session = DBSession()
     categories = session.query(Category).order_by(Category.name).all()
     return jsonify(categories=[r.serialize for r in categories])
+
 
 @app.route('/categories/new', methods=['GET', 'POST'])
 def newCategory():
@@ -96,30 +129,37 @@ def newCategory():
         flash(new_category.label + " created.")
         return redirect(url_for('Categories'))
 
+
 @app.route('/categories/<string:category_name>/edit', methods=['GET', 'POST'])
 def editCategory(category_name):
     if 'is_admin' not in login_session or not login_session['is_admin']:
         flash("You don't have access to that.")
         return redirect(url_for('Catalog'))
     session = DBSession()
-    category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    category = (session.query(Category)
+                .filter_by(name=bleach.clean(category_name.lower()))
+                .one())
     if request.method == 'GET':
         return render_template('editcategory.html', category=category)
     if request.method == 'POST':
-        category.label=bleach.clean(request.form['name'])
+        category.label = bleach.clean(request.form['name'])
         category.name = category.label.lower()
         session.add(category)
         session.commit()
         flash(category.label + " updated.")
         return redirect(url_for('Categories'))
 
-@app.route('/categories/<string:category_name>/delete', methods=['GET', 'POST'])
+
+@app.route('/categories/<string:category_name>/delete',
+           methods=['GET', 'POST'])
 def deleteCategory(category_name):
     if 'is_admin' not in login_session or not login_session['is_admin']:
         flash("You don't have access to that.")
         return redirect(url_for('Catalog'))
     session = DBSession()
-    category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
+    category = (session.query(Category)
+                .filter_by(name=bleach.clean(category_name.lower()))
+                .one())
     if request.method == 'GET':
         return render_template('deletecategory.html', category=category)
     if request.method == 'POST':
@@ -128,8 +168,10 @@ def deleteCategory(category_name):
         flash(category.label + " deleted.")
         return redirect(url_for('Categories'))
 
-@app.route('/catalog/items/new', methods=['GET','POST'])
-@app.route('/catalog/<string:category_name>/items/new', methods=['GET','POST'])
+
+@app.route('/catalog/items/new', methods=['GET', 'POST'])
+@app.route('/catalog/<string:category_name>/items/new',
+           methods=['GET', 'POST'])
 def newItem(category_name=None):
     if 'user_id' not in login_session:
         return redirect(url_for('showLogin'))
@@ -138,12 +180,15 @@ def newItem(category_name=None):
     category = None
     if category_name:
         try:
-            category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
-        except:
+            category = (session.query(Category)
+                        .filter_by(name=bleach.clean(category_name.lower()))
+                        .one())
+        except SQLAlchemyError:
             return "That category wasn't found :("
 
     if request.method == 'GET':
-        return render_template('newitem.html', category=category, categories=categories)
+        return render_template('newitem.html',
+                               category=category, categories=categories)
     if request.method == 'POST':
         new_item = Item(
             label=bleach.clean(request.form['name']),
@@ -154,52 +199,71 @@ def newItem(category_name=None):
         new_item = addItem(new_item, session)
         flash(new_item.label + " created.")
         if category:
-            return redirect(url_for('CategoryItems', category_name=category.name))
+            return redirect(url_for('CategoryItems',
+                                    category_name=category.name))
         return redirect(url_for('Catalog'))
+
 
 def addItem(new_item, session):
     new_item.name = new_item.label.lower()
-    if len(new_item.name) < 1: raise ValueError('Name cannot be empty.')
+    if len(new_item.name) < 1:
+        raise ValueError('Name cannot be empty.')
     session.add(new_item)
     session.commit()
     return new_item
+
 
 @app.route('/catalog/<string:category_name>/item/<string:item_name>')
 def viewItem(category_name, item_name):
     session = DBSession()
     try:
-        category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
-    except:
+        category = (session.query(Category)
+                    .filter_by(name=bleach.clean(category_name.lower()))
+                    .one())
+    except SQLAlchemyError:
         return "That category wasn't found :("
     try:
-        item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
-    except:
+        item = (session.query(Item)
+                .filter_by(category_id=category.id,
+                           name=bleach.clean(item_name.lower()))
+                .one())
+    except SQLAlchemyError:
         return "That item wasn't found :("
     username = None
     user_id = None
     if 'username' in login_session:
         username = login_session['username']
         user_id = login_session['user_id']
-    return render_template('viewitem.html', item=item, category=category, username=username, user_id = user_id)
+    return render_template('viewitem.html',
+                           item=item, category=category,
+                           username=username, user_id=user_id)
 
-@app.route('/catalog/<string:category_name>/item/<string:item_name>/edit', methods=['GET', 'POST'])
+
+@app.route('/catalog/<string:category_name>/item/<string:item_name>/edit',
+           methods=['GET', 'POST'])
 def editItem(category_name, item_name):
     if 'user_id' not in login_session:
         return redirect(url_for('showLogin'))
     session = DBSession()
     try:
-        category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
-    except:
+        category = (session.query(Category)
+                    .filter_by(name=bleach.clean(category_name.lower()))
+                    .one())
+    except SQLAlchemyError:
         return "That category wasn't found :("
     try:
-        item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
-    except:
+        item = (session.query(Item)
+                .filter_by(category_id=category.id,
+                           name=bleach.clean(item_name.lower()))
+                .one())
+    except SQLAlchemyError:
         return "That item wasn't found :("
     if login_session['user_id'] != item.user_id:
         return "You don't have access to this item."
     categories = session.query(Category).order_by(Category.name).all()
     if request.method == 'GET':
-        return render_template('edititem.html', category=category, categories=categories, item=item)
+        return render_template('edititem.html', category=category,
+                               categories=categories, item=item)
     if request.method == 'POST':
         item.label = bleach.clean(request.form['name'])
         item.description = bleach.clean(request.form['description'])
@@ -208,28 +272,38 @@ def editItem(category_name, item_name):
         flash(item.label + " updated.")
         return redirect(url_for('CategoryItems', category_name=category.name))
 
-@app.route('/catalog/<string:category_name>/item/<string:item_name>/delete', methods=['GET', 'POST'])
+
+@app.route('/catalog/<string:category_name>/item/<string:item_name>/delete',
+           methods=['GET', 'POST'])
 def deleteItem(category_name, item_name):
     if 'user_id' not in login_session:
         return redirect(url_for('showLogin'))
     session = DBSession()
     try:
-        category = session.query(Category).filter_by(name=bleach.clean(category_name.lower())).one()
-    except:
+        category = (session.query(Category)
+                    .filter_by(name=bleach.clean(category_name.lower()))
+                    .one())
+    except SQLAlchemyError:
         return "That category wasn't found :("
     try:
-        item = session.query(Item).filter_by(category_id=category.id, name=bleach.clean(item_name.lower())).one()
-    except:
+        item = (session.query(Item)
+                .filter_by(category_id=category.id,
+                           name=bleach.clean(item_name.lower()))
+                .one())
+    except SQLAlchemyError:
         return "That item wasn't found :("
     if login_session['user_id'] != item.user_id:
         return "You don't have access to this item."
     if request.method == 'GET':
-        return render_template('deleteitem.html', category=category, item=item)
+        return render_template('deleteitem.html',
+                               category=category, item=item)
     if request.method == 'POST':
         session.delete(item)
         session.commit()
         flash(item.label + " deleted.")
-        return redirect(url_for('CategoryItems', category_name = category.name))
+        return redirect(url_for('CategoryItems',
+                                ategory_name=category.name))
+
 
 @app.route('/login')
 def showLogin():
@@ -238,6 +312,7 @@ def showLogin():
                     for x in xrange(32))
     login_session['state'] = state
     return render_template('login.html', STATE=state)
+
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -290,8 +365,8 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(
+            json.dumps('Current user is already connected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -322,6 +397,7 @@ def gconnect():
     flash("you are now logged in as %s" % login_session['username'])
     return output
 
+
 # Disconnect based on provider
 @app.route('/disconnect')
 def disconnect():
@@ -340,6 +416,7 @@ def disconnect():
         flash("You were not logged in")
         return redirect(url_for('Catalog'))
 
+
 @app.route('/gdisconnect')
 def gdisconnect():
     # Only disconnect a connected user.
@@ -357,11 +434,14 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response = make_response(
+            json.dumps('Failed to revoke token for given user.', 400)
+        )
         response.headers['Content-Type'] = 'application/json'
         return response
 
-def createUser(login_session) :
+
+def createUser(login_session):
     session = DBSession()
     newUser = User(email=login_session['email'])
     session.add(newUser)
@@ -369,27 +449,29 @@ def createUser(login_session) :
     user = session.query(User).filter_by(email=login_session['email']).one()
     return user.id
 
-def getUserId(email) :
+
+def getUserId(email):
     session = DBSession()
-    try :
+    try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
-    except :
+    except SQLAlchemyError:
         return None
 
-def getUserInfo(id) :
+
+def getUserInfo(id):
     session = DBSession()
-    try :
+    try:
         user = session.query(User).filter_by(id=id).one()
         return user
-    except :
+    except SQLAlchemyError:
         return None
 
 
 if __name__ == '__main__':
-    app.secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+    app.secret_key = ''.join(random.choice(
+        string.ascii_uppercase + string.digits) for x in xrange(32))
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
     # Uncomment for https
     # app.run(host='0.0.0.0', port=5000, ssl_context='adhoc')
-
