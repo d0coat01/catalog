@@ -1,5 +1,8 @@
+"""
+Commonly-used queries
+"""
 from sqlalchemy.exc import SQLAlchemyError
-from setup import Base, User, Category, Item
+from setup import Category, Item
 import bleach
 
 

@@ -1,7 +1,9 @@
 """
+This is the main Flask application for Danslist.
 All endpoints were built using Flask for routing functionality,
 Jinja2 for templating, and SQLAlchemy for database interaction.
 """
+# Imports
 from functools import wraps
 from flask import (Flask, render_template, redirect, url_for,
                    request, jsonify, flash, make_response)
@@ -37,6 +39,13 @@ DBSession = sessionmaker(bind=engine)
 
 
 def loginRequired(f):
+    """
+    Checks to see if user_id is currently in login_session.
+    Wraps this check in a decorator.
+    :return:
+    decorator function if condition met.
+    Redirect if not.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' in login_session:
@@ -48,6 +57,13 @@ def loginRequired(f):
 
 
 def adminRequired(f):
+    """
+    Checks to see if is_admin flag is set to true in login_session.
+    Wraps this check in a decorator.
+    :return:
+    Decorator function if condition met.
+    Redirect if not.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'is_admin' in login_session and login_session['is_admin']:
